@@ -10,8 +10,8 @@ const cors = require('cors');
 // Declaring Constants
 
 const DB = "mongodb+srv://snips:snips@cluster0.hscsw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
-const jwtKey = "hi";
-const AUTHTOKEN = "hi";
+const jwtKey = process.env.SASTA_JWT;
+const AUTHTOKEN = process.env.SASTA_KEY;
 app = express();
 const port = process.env.PORT || 8080;
 app.use(express.json());
