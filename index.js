@@ -9,11 +9,11 @@ const schemas = require("./Schema");
 const cors = require('cors');
 // Declaring Constants
 
-const DB = "mongodb://localhost:27017/schoolProject";
+const DB = "mongodb+srv://snips:snips@cluster0.hscsw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const jwtKey = process.env.SASTA_JWT;
 const AUTHTOKEN = process.env.SASTA_KEY;
 app = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 80;
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cors());
