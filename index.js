@@ -3,21 +3,20 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+require('dotenv').config();
 const mongoose = require("mongoose");
 const schemas = require("./Schema");
 const cors = require('cors');
-
 // Declaring Constants
 
 const DB = "mongodb://localhost:27017/schoolProject";
-const jwtKey = "yesecretha";
-const AUTHTOKEN = "ultraprotoken";
+const jwtKey = process.env.SASTA_JWT;
+const AUTHTOKEN = process.env.SASTA_KEY;
 app = express();
 const port = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cors());
-app.use(express.static("public"));
 
 // Connecting to Database
 
@@ -32,7 +31,8 @@ mongoose.connection.on("error", err => console.log("Runtime Connection Error - "
 const Admin = new mongoose.model("Admin", schemas.adminSchema);
 const Message = new mongoose.model("Message", schemas.messageSchema);
 const Notice = new mongoose.model("Notice", schemas.noticeSchema);
-const Student = new mongoose.model("Student", schemas.studentSchema);
+const student = new mongoose.model("student", schemas.studentSchema);
+const Teacher = new mongoose.model("Teacher", schemas.teacherSchema);
 
 
 // Parameters validation function
@@ -54,12 +54,12 @@ function validateParams(a){
 
 // 0 - Normal Endpoint
 app.get("/", (req,res) => {
-	res.sendFile(__dirname+"/public/index.html");
+	res.end("This is api not your personal website, so use navigate through proper endpoints else i will destroy ur pc");
 });
 
 // 1 - Admin Creation Endpoint
 
-app.get("/api/createAdsfsfgsgmin", async(req,res) => {
+app.get("/api/createAdmin", async(req,res) => {
 	var name = req.query.name;
 	var password = req.query.password;
 	if(req.query.token!=AUTHTOKEN){
@@ -126,22 +126,18 @@ app.get("/api/loginAdmin", async(req,res) => {
 
 // 3 - Verify Session Endpoint
 
-app.post("/api/verifySession", async(req,res) => {
-	var email = req.body.email;
-	var token = req.body.token;
-	var p = [email,token];
+app.get("/api/verifySession", async(req,res) => {
+	var name = req.query.name;
+	var token = req.query.j;
+	var p = [name,token];
 	if(req.query.token!=AUTHTOKEN){
 		res.json({
 			message:"Invalid Authtoken"
 		});
-	}else if(!validateParams(p)){
-		res.json({
-			message:"Invalid Parameters"
-		});
 	}else{
 		try{
 			var td = jwt.verify(token, jwtKey);
-			if(td.email==email){
+			if(td.name==name){
 				res.json({
 					message:"Token Valid"
 				});
@@ -353,14 +349,13 @@ app.get("/api/editNotice", async(req,res) => {
 	}
 });
 
-// 10 - Get Students Data
+// 10 - Get students Data
 
-app.get("/api/getStudent", async(req,res) => {
+app.get("/api/getstudent", async(req,res) => {
 	var admNo = req.query.admNo;
-	// var admNo = "";
 	var cls = req.query.cls;
-	cls = cls==""?cls="X":cls;
 	var section = req.query.sec;
+	section = section.toUpperCase();
 	var house = req.query.house;
 	var egl = req.query.egl;
 	var halfPer = req.query.halfPercentage;
@@ -369,12 +364,12 @@ app.get("/api/getStudent", async(req,res) => {
 	var annualAtt = req.query.annualAtt;
 	var dob = req.query.dob;
 	var doa = req.query.doa;
-	var feee = req.query.fee;
-	var newArr = new Array();
-	Student.find({admNo:{$regex : admNo}, sec:{$regex : section},egl: {$regex:egl}, cls : cls, halfpercentage: {$gte: halfPer}, house:{$regex : house}, annualpercentage: {$gte : annualfPer}
-		, halfattendence: {$gte: halfAtt}, annualattendence: {$gte: annualAtt}, dob : {$regex : dob}, doa : {$regex : doa}
-	}, (err, data) => {
-		if(data.length>=200) {
+	var fee = req.query.fee;
+	console.log(halfPer)
+	student.find({admNo : {$regex : admNo}, cls : cls, sec : {$regex:section}, house : {$regex : house}, egl : {$regex : egl}, halfpercentage : {$gte : halfPer}, annualpercentage : {$gte : annualfPer}, halfattendence : {$gte : halfAtt}, annualattendence : {$gte : annualAtt},fee : {$gte : fee}, doa : {$regex : doa}, dob : {$regex : dob} },
+		 (err, data) => {
+			
+		if(data.length>200) {
 			data = data.slice(0, 200);
 			res.send(data);
 		}
@@ -383,22 +378,318 @@ app.get("/api/getStudent", async(req,res) => {
 		}
 	})
 });
-// 11 - Add Student Endpoint
 
-app.post("/api/addStudent", async(req,res) => {
-	var name = req.query.name;
+app.get("/api/getStudentsDetails", async(req, res) => {
 	var admNo = req.query.admNo;
 	var cls = req.query.cls;
-	var section = req.query.section;
+	var section = req.query.sec;
+	if(section)
+	section = section.toUpperCase();
+	else section="";
+	var house = req.query.house;
 	var dob = req.query.dob;
 	var doa = req.query.doa;
-	var house = req.query.house;
-	var address = req.query.address;
-	var phoneOne = req.query.phoneOne;
-	var phoneTwo = req.query.phoneTwo;
-	var fatherName = req.query.fName;
-	var motherName = req.query.mName;
+	var fee = req.query.fee;
+	console.log("Normal cls = "+cls)
+	var halfPercentage = req.query.halfPercentage;
+	var annualPercentage = req.query.annualPercentage;
+	var annualAtt = req.query.annualAtt;
+	var halfAtt = req.query.halfAtt;
+	if(halfPercentage=="") halfPercentage = 0;
+	if(annualPercentage=="") annualPercentage = 0;
+	if(annualAtt=="") annualAtt = 0;
+	if(halfAtt=="") halfAtt = 0;
+	if(fee!="") {
+		if(fee.length>2) {
+			if(fee[1]==" ") {
+				fee = fee[0];
+				fee = parseInt(fee)
+			}
+			else if(fee[2]==" ") {
+				fee = fee.substring(0, 2);
+				fee = parseInt(fee);
+			}
+		}
+		else {
+			fee = parseInt(fee);
+		}
+	}
+	console.log(fee)
+	if(cls==""&&fee=="") {
+	student.find({
+		admNo : {$regex : admNo},
+		sec : {$regex : section},
+		house : {$regex : house},
+		dob : {$regex : dob},
+		doa : {$regex : doa},
+		annualpercentage : {$gte : annualPercentage},
+		halfpercentage : {$gte : halfPercentage},
+		annualattendence : {$gte : annualAtt},
+		halfattendence : {$gte : halfAtt}
+	},
+		 (err, data) => {
+			
+		if(data.length>200) {
+			data = data.slice(0, 200);
+			res.send(data);
+		}
+		else {
+			res.send(data);
+		}
+	})
+} 
+else if(cls==""&&fee!="") {
+	student.find({
+		admNo : {$regex : admNo},
+		sec : {$regex : section},
+		house : {$regex : house},
+		dob : {$regex : dob},
+		doa : {$regex : doa},
+		annualpercentage : {$gte : annualPercentage},
+		halfpercentage : {$gte : halfPercentage},
+		fee : fee,
+		annualattendence : {$gte : annualAtt},
+		halfattendence : {$gte : halfAtt}
 
+	},
+		 (err, data) => {
+			
+		if(data.length>200) {
+			data = data.slice(0, 200);
+			res.send(data);
+		}
+		else {
+			res.send(data);
+		}
+	})
+}
+else if(cls!=""&&fee=="") {
+	student.find({
+		admNo : {$regex : admNo},
+		cls : cls,
+		sec : {$regex : section},
+		house : {$regex : house},
+		dob : {$regex : dob},
+		doa : {$regex : doa},
+		annualpercentage : {$gte : annualPercentage},
+		halfpercentage : {$gte : halfPercentage},
+		annualattendence : {$gte : annualAtt},
+		halfattendence : {$gte : halfAtt}
+
+	},
+		 (err, data) => {
+			
+		if(data.length>200) {
+			data = data.slice(0, 200);
+			res.send(data);
+		}
+		else {
+			res.send(data);
+		}
+	})
+}
+
+
+
+	else {
+		student.find({
+		admNo : {$regex : admNo},
+		cls : cls,
+		sec : {$regex : section},
+		house : {$regex : house},
+		fee : fee,
+		dob : {$regex : dob},
+		doa : {$regex : doa},
+		annualpercentage : {$gte : annualPercentage},
+		halfpercentage : {$gte : halfPercentage},
+		annualattendence : {$gte : annualAtt},
+		halfattendence : {$gte : halfAtt}
+
+	},
+		 (err, data) => {
+			
+		if(data.length>200) {
+			data = data.slice(0, 200);
+			res.send(data);
+		}
+		else {
+			res.send(data);
+		}
+	})
+	}
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 2408234 - Get all queries
+
+app.get("/api/getAllQueries", (req, res) => {
+	var token = req.query.token;
+	if(req.query.token==AUTHTOKEN){
+		Message.find({}, (err, data) => {
+			data = data.reverse();
+			if(data.length>80) {
+				data = data.slice(0, 60);
+				res.send(data);
+			}
+			else {
+				res.send(data);
+			}
+		});
+	}
+});
+
+
+// 11 - Add student Endpoint
+
+app.get("/api/addStudent", async(req,res) => {
+	var admNo= req.query.admNo;
+	var cls= req.query.cls;
+	var sec= req.query.sec;
+	var pass= req.query.pass;
+	var token = req.query.token;	var sName= req.query.sName;
+	var fName= req.query.fName;
+	var mName= req.query.mName;
+	var fNum= req.query.fNum;
+	var mNum= req.query.mNum;
+	var dob= req.query.dob;
+	var doa= req.query.doa;
+	var house= req.query.house;
+	var session= JSON.stringify((new Date()).getFullYear);
+	var address= req.query.address;
+	var halfenglishRhymes= req.query.halfenglishRhymes;
+	var halfenglishConversation= req.query.halfenglishConversation;
+	var halfenglishOral= req.query.halfenglishOral;
+	var halfenglishHandwriting= req.query.halfenglishHandwriting;
+	var halfenglishWrittenOne= req.query.halfenglishWrittenOne;
+	var halfenglishWrittenTwo= req.query.halfenglishWrittenTwo;
+	var halfhindiRhymes= req.query.halfhindiRhymes;
+	var halfhindiOral= req.query.halfhindiOral;
+	var halfhindiHandwriting= req.query.halfhindiHandwriting;
+	var halfhindiWritten= req.query.halfhindiWritten;
+	var halfsanskrit= req.query.halfsanskrit;
+	var halfmathsOral= req.query.halfmathsOral;
+	var halfmathsWritten= req.query.halfmathsWritten;
+	var halfphysics= req.query.halfphysics;
+	var halfchemistry= req.query.halfchemistry;
+	var halfbiology= req.query.halfbiology;
+	var halfhistory= req.query.halfhistory;
+	var halfgeography= req.query.halfgeography;
+	var halfcomputer= req.query.halfcomputer;
+	var halfdrawing= req.query.halfdrawing;
+	var halfgenKnowledge= req.query.halfgenKnowledge;
+	var halfmoralScience= req.query.halfmoralScience;
+	var halfattendence= req.query.halfattendence;
+	var halfpercentage= req.query.halfpercentage;
+	var halfbehaviour= req.query.halfbehaviour;
+	var halfneatnessOfWork= req.query.halfneatnessOfWork;
+	var halfpunctuality= req.query.halfpunctuality;
+	var halfcoCirricular= req.query.halfcoCirricular;
+	var annualbehaviour= req.query.annualbehaviour;
+	var annualneatnessOfWork= req.query.annualneatnessOfWork;
+	var annualpunctuality= req.query.annualpunctuality;
+	var annualcoCirricular= req.query.annualcoCirricular;
+	var annualenglishRhymes= req.query.annualenglishRhymes;
+	var annualenglishConversation= req.query.annualenglishConversation;
+	var annualenglishOral= req.query.annualenglishOral;
+	var annualenglishHandwriting= req.query.annualenglishHandwriting;
+	var annualenglishWrittenOne= req.query.annualenglishWrittenOne;
+	var annualenglishWrittenTwo= req.query.annualenglishWrittenTwo;
+	var annualhindiRhymes= req.query.annualhindiRhymes;
+	var annualhindiOral= req.query.annualhindiOral;
+	var annualhindiHandwriting= req.query.annualhindiHandwriting;
+	var annualhindiWritten= req.query.annualhindiWritten;
+	var annualsanskrit= req.query.annualsanskrit;
+	var annualmathsOral= req.query.annualmathsOral;
+	var annualmathsWritten= req.query.annualmathsWritten;
+	var annualphysics= req.query.annualphysics;
+	var annualchemistry= req.query.annualchemistry;
+	var annualbiology= req.query.annualbiology;
+	var annualhistory= req.query.annualhistory;
+	var annualgeography= req.query.annualgeography;
+	var annualcomputer= req.query.annualcomputer;
+	var annualdrawing= req.query.annualdrawing;
+	var annualgenKnowledge= req.query.annualgenKnowledge;
+	var annualmoralScience= req.query.annualmoralScience;
+	var annualattendence= req.query.annualattendence;
+	var annualpercentage= req.query.annualpercentage;
+	var fee = req.query.fee;
+	if(fee=="") {fee = 1;}
+	else {
+		if(fee.length>2) {
+			if(fee[1]==" ") {
+				fee = fee[0];
+				fee = parseInt(fee)
+			}
+			else if(fee[2]==" ") {
+				fee = fee.substring(0, 2);
+				fee = parseInt(fee);
+			}
+		}
+		else {
+			fee = parseInt(fee);
+		}
+	}
+	if(req.query.token!=AUTHTOKEN){
+		res.json({
+			message:"Invalid Authtoken"
+		});
+	}
+	else{
+		var newstudent = new student({
+			admNo,cls,sec,pass,sName,fName,mName,fNum,mNum,dob,doa,house,session,address,halfenglishRhymes,halfenglishConversation,halfenglishOral,halfenglishHandwriting,halfenglishWrittenOne,halfenglishWrittenTwo,halfhindiRhymes,halfhindiOral,halfhindiHandwriting,halfhindiWritten,halfsanskrit,halfmathsOral,halfmathsWritten,halfphysics,halfchemistry,halfbiology,halfhistory,halfgeography,halfcomputer,halfdrawing,halfgenKnowledge,halfmoralScience,halfattendence,halfpercentage,halfbehaviour,halfneatnessOfWork,halfpunctuality,halfcoCirricular,annualbehaviour,annualneatnessOfWork,annualpunctuality,annualcoCirricular,annualenglishRhymes,annualenglishConversation,annualenglishOral,annualenglishHandwriting,annualenglishWrittenOne,annualenglishWrittenTwo,annualhindiRhymes,annualhindiOral,annualhindiHandwriting,annualhindiWritten,annualsanskrit,annualmathsOral,annualmathsWritten,annualphysics,annualchemistry,annualbiology,annualhistory,annualgeography,annualcomputer,annualdrawing,annualgenKnowledge,annualmoralScience,annualattendence,annualpercentage,fee,
+                        halfmanners:{
+                                behaviour:halfbehaviour,
+                                neatnessOfWork:halfneatnessOfWork,
+                                punctuality:halfpunctuality,
+                                coCirricular:halfcoCirricular
+                        },
+                        annualmanners:{
+                                behaviour:annualbehaviour,
+                                neatnessOfWork:annualneatnessOfWork,
+                                punctuality:annualpunctuality,
+                                coCirricular:annualcoCirricular
+                        }
+		});
+		try{
+			student.find({admNo : admNo}, (err, data) => {
+				if(data.length==0) {
+			newstudent.save().then(() => {
+			console.log(req.query.count + ". Student admNo : "+admNo);
+			res.send("ok");
+			});
+				} else {
+					res.send("no");
+				}
+		});
+		}catch(err){
+			console.log("can't save");
+			res.json("no");
+		}
+	}
+});
+
+// 12 - Edit student Data
+
+
+// 13 - Delete student
+
+app.get("/api/deletestudent", async(req,res) => {
+	var admNo = req.query.admNo;
+	var p = [admNo];
 	if(req.query.token!=AUTHTOKEN){
 		res.json({
 			message:"Invalid Authtoken"
@@ -408,15 +699,10 @@ app.post("/api/addStudent", async(req,res) => {
 			message:"Invalid Parameters"
 		});
 	}else{
-		var newStudent = new Student({
-			admNo,cls,section,details:{
-				name,fatherName,motherName,dob,doa,house,address,phoneOne,phoneTwo
-			}
-		});
 		try{
-			await newStudent.save();
+			var result = await student.deleteOne({admNo});
 			res.json({
-				message:"Student Added"
+				result
 			});
 		}catch(err){
 			res.json({
@@ -427,21 +713,14 @@ app.post("/api/addStudent", async(req,res) => {
 	}
 });
 
-// 12 - Edit Student Data
-
-
-// 13 - Delete Student
-
 app.get("/api/deleteStudent", async(req,res) => {
 	var admNo = req.query.admNo;
-	var p = [admNo];
-	if(req.query.token!=AUTHTOKEN){
+	var token = req.query.token;
+	// Token Validation Here
+	var tokenValid = true;
+	if(token!=process.env.SASTA_KEY){
 		res.json({
 			message:"Invalid Authtoken"
-		});
-	}else if(!validateParams(p)){
-		res.json({
-			message:"Invalid Parameters"
 		});
 	}else{
 		try{
@@ -457,6 +736,341 @@ app.get("/api/deleteStudent", async(req,res) => {
 		}
 	}
 });
+
+// Update student Endpoint
+
+app.get("/api/updateStudentData", async(req,res) => {
+	console.log("wgwjgbwrgrg")
+	var admNo= req.query.admNo;
+	var cls= req.query.cls;
+	var sec= req.query.sec;
+	var pass= req.query.pass;
+	var token = req.query.token;  var sName= req.query.sName;
+	var fName= req.query.fName;
+	var mName= req.query.mName;
+	var fNum= req.query.fNum;
+	var mNum= req.query.mNum;
+	var dob= req.query.dob;
+	var doa= req.query.doa;
+	var house= req.query.house;
+	var session= JSON.stringify((new Date()).getFullYear);
+	var address= req.query.address;
+	var halfenglishRhymes= req.query.halfenglishRhymes;
+	var halfenglishConversation= req.query.halfenglishConversation;
+	var halfenglishOral= req.query.halfenglishOral;
+	var halfenglishHandwriting= req.query.halfenglishHandwriting;
+	var halfenglishWrittenOne= req.query.halfenglishWrittenOne;
+	var halfenglishWrittenTwo= req.query.halfenglishWrittenTwo;
+	var halfhindiRhymes= req.query.halfhindiRhymes;
+	var halfhindiOral= req.query.halfhindiOral;
+	var halfhindiHandwriting= req.query.halfhindiHandwriting;
+	var halfhindiWritten= req.query.halfhindiWritten;
+	var halfsanskrit= req.query.halfsanskrit;
+	var halfmathsOral= req.query.halfmathsOral;
+	var halfmathsWritten= req.query.halfmathsWritten;
+	var halfphysics= req.query.halfphysics;
+	var halfchemistry= req.query.halfchemistry;
+	var halfbiology= req.query.halfbiology;
+	var halfhistory= req.query.halfhistory;
+	var halfgeography= req.query.halfgeography;
+	var halfcomputer= req.query.halfcomputer;
+	var halfdrawing= req.query.halfdrawing;
+	var halfgenKnowledge= req.query.halfgenKnowledge;
+	var halfmoralScience= req.query.halfmoralScience;
+	var halfattendence= req.query.halfattendence;
+	var halfpercentage= req.query.halfpercentage;
+	var halfbehaviour= req.query.halfbehaviour;
+	var halfneatnessOfWork= req.query.halfneatnessOfWork;
+	var halfpunctuality= req.query.halfpunctuality;
+	var halfcoCirricular= req.query.halfcoCirricular;
+	var annualbehaviour= req.query.annualbehaviour;
+	var annualneatnessOfWork= req.query.annualneatnessOfWork;
+	var annualpunctuality= req.query.annualpunctuality;
+	var annualcoCirricular= req.query.annualcoCirricular;
+	var annualenglishRhymes= req.query.annualenglishRhymes;
+	var annualenglishConversation= req.query.annualenglishConversation;
+	var annualenglishOral= req.query.annualenglishOral;
+	var annualenglishHandwriting= req.query.annualenglishHandwriting;
+	var annualenglishWrittenOne= req.query.annualenglishWrittenOne;
+	var annualenglishWrittenTwo= req.query.annualenglishWrittenTwo;
+	var annualhindiRhymes= req.query.annualhindiRhymes;
+	var annualhindiOral= req.query.annualhindiOral;
+	var annualhindiHandwriting= req.query.annualhindiHandwriting;
+	var annualhindiWritten= req.query.annualhindiWritten;
+	var annualsanskrit= req.query.annualsanskrit;
+	var annualmathsOral= req.query.annualmathsOral;
+	var annualmathsWritten= req.query.annualmathsWritten;
+	var annualphysics= req.query.annualphysics;
+	var annualchemistry= req.query.annualchemistry;
+	var annualbiology= req.query.annualbiology;
+	var annualhistory= req.query.annualhistory;
+	var annualgeography= req.query.annualgeography;
+	var annualcomputer= req.query.annualcomputer;
+	var annualdrawing= req.query.annualdrawing;
+	var annualgenKnowledge= req.query.annualgenKnowledge;
+	var annualmoralScience= req.query.annualmoralScience;
+	var annualattendence= req.query.annualattendence;
+	var annualpercentage= req.query.annualpercentage;
+	var fee = req.query.fee;
+	if(fee=="") {fee = 1;}
+	else {
+	  if(fee.length>2) {
+		if(fee[1]==" ") {
+		  fee = fee[0];
+		  fee = parseInt(fee)
+		}
+		else if(fee[2]==" ") {
+		  fee = fee.substring(0, 2);
+		  fee = parseInt(fee);
+		}
+	  }
+	  else {
+		fee = parseInt(fee);
+	  }
+	}
+	if(req.query.token!=AUTHTOKEN){
+	  res.json({
+		message:"Invalid Authtoken"
+	  });
+	}
+	else{
+	  try{
+	  	var d = await student.updateOne({admNo : admNo},{$set : {admNo,cls,sec,pass,sName,fName,mName,fNum,mNum,dob,doa,house,session,address,halfenglishRhymes,halfenglishConversation,halfenglishOral,halfenglishHandwriting,halfenglishWrittenOne,halfenglishWrittenTwo,halfhindiRhymes,halfhindiOral,halfhindiHandwriting,halfhindiWritten,halfsanskrit,halfmathsOral,halfmathsWritten,halfphysics,halfchemistry,halfbiology,halfhistory,halfgeography,halfcomputer,halfdrawing,halfgenKnowledge,halfmoralScience,halfattendence,halfpercentage,halfbehaviour,halfneatnessOfWork,halfpunctuality,halfcoCirricular,annualbehaviour,annualneatnessOfWork,annualpunctuality,annualcoCirricular,annualenglishRhymes,annualenglishConversation,annualenglishOral,annualenglishHandwriting,annualenglishWrittenOne,annualenglishWrittenTwo,annualhindiRhymes,annualhindiOral,annualhindiHandwriting,annualhindiWritten,annualsanskrit,annualmathsOral,annualmathsWritten,annualphysics,annualchemistry,annualbiology,annualhistory,annualgeography,annualcomputer,annualdrawing,annualgenKnowledge,annualmoralScience,annualattendence,annualpercentage,fee,
+			halfmanners:{
+					behaviour:halfbehaviour,
+					neatnessOfWork:halfneatnessOfWork,
+					punctuality:halfpunctuality,
+					coCirricular:halfcoCirricular
+			},
+			annualmanners:{
+					behaviour:annualbehaviour,
+					neatnessOfWork:annualneatnessOfWork,
+					punctuality:annualpunctuality,
+					coCirricular:annualcoCirricular
+			}}
+}) 
+		console.log(d)
+		res.send("ok")
+	  }catch(err){
+		console.log(err);
+		res.json("no");
+	  }
+	}
+  });
+
+// Delete Contact Message Endpoint
+
+app.get("/api/deleteMessage", async(req,res) => {
+	var id = req.query.id;
+	var p = [id];
+	var token = req.query.token;
+	var tokenValid,role;
+	try{
+		var data = jwt.verify(token,jwtKey);
+		tokenValid = true;
+		role = data.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid&&!role=="admin"){
+		res.json({
+		message:"Invalid Authtoken"
+		});
+	}else if(!validateParams(p)){
+		res.json({
+		message:"Invalid Parameters"
+		});
+	}else{
+		try{
+		var result = await Message.deleteOne({_id:id});
+		res.json({
+		result
+		});
+		}catch(err){
+		res.json({
+		message:"Error Occured",
+		error:err
+		});
+		}
+	}
+});
+
+
+// 1 - Add Teachers Endpoint
+
+app.get("/api/addTeacher", async(req,res)=>{
+	var token = req.query.token;
+	var name = req.query.name;
+	var imgLink = req.query.imgLink;
+	var cls = req.query.cls;
+	var sec = req.query.sec;
+	var adhar = req.query.adhaar;
+	var addr = req.query.address;
+	var phone = req.query.phone;
+	var subjects = req.query.subject.split(",");
+	var dob = req.query.dob;
+	var doj = req.query.doj;
+	var tcls = req.query.tcls.split(",");
+	var tokenValid,role;
+	try{
+		var d = jwt.verify(token, jwtKey);
+		tokenValid = true;
+		role = d.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid&&!role=="admin"){
+		re.json({
+			message:"Token Invalid"
+		});
+	}else{
+		try{
+			var newTeacher = new Teacher({
+				name : name,
+				cls : cls,
+				clsess : tcls,
+				dob : dob,
+				doj : doj,
+				sec : sec,
+				adhar : adhar,
+				addr : addr,
+				subjects : subjects,
+				phone : phone,
+				imgLink : imgLink
+			});
+			await newTeacher.save();
+			res.send("ok");
+		}catch(err){
+			res.json({
+				message:"Error Occured",
+				error:err
+			});
+		}
+	}
+});
+
+
+app.get("/api/getTeacher", async(req,res) => {
+	var token = req.query.token;
+	var id = req.query.id;
+	var cls = req.query.cls;
+	var sec = req.query.sec;
+	var tokenValid,role;
+	if(cls=="") cls="10";
+	try{
+	 var d = jwt.verify(token, jwtKey);
+	 tokenValid = true;
+	 role = d.role;
+	}catch(err){
+	 tokenValid = false;
+	}
+	if(!tokenValid){
+	 res.json({
+	  message:"Invalid Token"
+	 });
+	}else{
+	 try{
+	  if(id)
+	   var data = await Teacher.find({__id:id});
+	  else if(cls&&sec)
+	   var data = await Teacher.find({cls,sec : {$regex : sec}});
+	  else
+	   var data = await Teacher.find();
+	  res.json({
+	   message:"Done",
+	   data
+	  });
+	 }catch(err){
+	  res.json({
+	   message: "Error Occured",
+	   error:err
+	  });
+	 }
+	}
+   });
+
+app.get("/api/deleteTeacher", async(req, res) => {
+	var id = req.query.id;
+	var p = [id];
+	var token = req.query.token;
+	var tokenValid,role;
+	try{
+		var data = jwt.verify(token,jwtKey);
+		tokenValid = true;
+		role = data.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid&&!role=="admin"){
+		res.json({
+		message:"Invalid Authtoken"
+		});
+	}else{
+		try{
+		var result = await Teacher.deleteOne({_id:id});
+		res.json({
+		result
+		});
+		}catch(err){
+		res.json({
+		message:"Error Occured",
+		error:err
+		});
+		}
+	}
+});
+
+app.get("/api/editTeacher", async(req, res) => {
+	var token = req.query.token;
+	var name = req.query.name;
+	var imgLink = req.query.imgLink;
+	var cls = req.query.cls;
+	var sec = req.query.sec;
+	var adhar = req.query.adhaar;
+	var addr = req.query.address;
+	var phone = req.query.phone;
+	var subjects = req.query.subject.split(",");
+	var dob = req.query.dob;
+	var doj = req.query.doj;
+	var tcls = req.query.tcls.split(",");
+	var tokenValid,role;
+	try{
+		var d = jwt.verify(token, jwtKey);
+		tokenValid = true;
+		role = d.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid&&!role=="admin"){
+		re.json({
+			message:"Token Invalid"
+		});
+	}else{
+		try{
+			var newTeacher = Teacher.updateOne({_id:id}, {$set : {
+				name : name,
+				imgLink : imgLink,
+				cls : cls,
+				sec : sec,
+				clsess : tcls,
+				subjects : subjects,
+				addr : addr,
+				phone : phone,
+				adhar : adhar,
+				doj : doj,
+				dob : dob
+			}});
+			console.log(newTeacher);
+			res.send("ok");
+		}catch(err){
+			res.json({
+				message:"Error Occured",
+				error:err
+			});
+		}
+	}
+});
+
 
 // Starting the server
 

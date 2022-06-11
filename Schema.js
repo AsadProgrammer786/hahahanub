@@ -73,7 +73,6 @@ const studentSchema = new mongoose.Schema({
 	halfmanners:{
 		behaviour:String,
 		neatnessOfWork:String,
-		neatnessOfAppearance:String,
 		punctuality:String,
 		coCirricular:String
 	},
@@ -107,7 +106,6 @@ const studentSchema = new mongoose.Schema({
 	annualmanners:{
 		behaviour:String,
 		neatnessOfWork:String,
-		neatnessOfAppearance:String,
 		punctuality:String,
 		coCirricular:String
 	},
@@ -232,11 +230,58 @@ const studentSchema = new mongoose.Schema({
 // 		}
 // 	}
 // });
+const teacherSchema = new mongoose.Schema({
+	name:{
+		type:String,
+		required:true
+	},
+	imgLink:{
+		type:String,
+		required:true
+	},
+	cls:{
+		type:String,
+		required:true
+	},
+	sec:{
+		type:String,
+		required:true
+	},
+	clsess:{
+		type:Array,
+		required:true
+	},
+	subjects:{
+		type:Array,
+		required:true
+	},
+	addr:{
+		type:String,
+		required:true
+	},
+	phone:{
+		type:String,
+		required:true
+	},
+	adhar:{
+		type:String,
+		required:true
+	},
+	doj:{
+		type:String,
+		required:true
+	},
+	dob:{
+		type:String,
+		required:true
+	}
+});
 
 
 module.exports = {
 	adminSchema,
 	messageSchema,
 	noticeSchema,
-	studentSchema
+	studentSchema,
+	teacherSchema
 };
