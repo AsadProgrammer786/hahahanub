@@ -238,7 +238,16 @@ app.get("/api/getMessage", async(req,res) => {
 app.get("/api/addNotice", async(req,res) => {
 	var notice = req.query.notice;
 	var p = [notice];
-	if(req.query.token!=AUTHTOKEN){
+	var token = req.query.token;
+	var tokenValid,role;
+	try{
+		var data = jwt.verify(token,jwtKey);
+		tokenValid = true;
+		role = data.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid&&!role=="admin"){
 		res.json({
 			message:"Invalid Authtoken"
 		});
@@ -269,7 +278,16 @@ app.get("/api/addNotice", async(req,res) => {
 // 7 - Get Notice Endpoint
 
 app.get("/api/getNotice", async(req,res) => {
-	if(req.query.token!=AUTHTOKEN){
+	var token = req.query.token;
+	var tokenValid,role;
+	try{
+		var data = jwt.verify(token,jwtKey);
+		tokenValid = true;
+		role = data.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid){
 		res.json({
 			message:"Invalid Authtoken"
 		});
@@ -293,7 +311,16 @@ app.get("/api/getNotice", async(req,res) => {
 app.get("/api/deleteNotice", async(req,res) => {
 	var id = req.query.id;
 	var p = [id];
-	if(req.query.token!=AUTHTOKEN){
+	var token = req.query.token;
+	var tokenValid,role;
+	try{
+		var data = jwt.verify(token,jwtKey);
+		tokenValid = true;
+		role = data.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid&&!role=="admin"){
 		res.json({
 			message:"Invalid Authtoken"
 		});
@@ -316,13 +343,23 @@ app.get("/api/deleteNotice", async(req,res) => {
 	}
 });
 
+
 // 9 - Edit Notice Endpoint
 
 app.get("/api/editNotice", async(req,res) => {
 	var notice = req.query.notice;
 	var id = req.query.id;
 	var p = [notice,id];
-	if(req.query.token!=AUTHTOKEN){
+	var token = req.query.token;
+	var tokenValid,role;
+	try{
+		var data = jwt.verify(token,jwtKey);
+		tokenValid = true;
+		role = data.role;
+	}catch(err){
+		tokenValid = false;
+	}
+	if(!tokenValid&&!role=="admin"){
 		res.json({
 			message:"Invalid Authtoken"
 		});
