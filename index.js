@@ -10,10 +10,10 @@ const cors = require('cors');
 // Declaring Constants
 
 const DB = "mongodb+srv://snips:snips@cluster0.hscsw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
-const jwtKey = process.env.SASTA_JWT;
-const AUTHTOKEN = process.env.SASTA_KEY;
+const jwtKey = "hi";
+const AUTHTOKEN = "hi";
 app = express();
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cors());
@@ -718,7 +718,7 @@ app.get("/api/deleteStudent", async(req,res) => {
 	var token = req.query.token;
 	// Token Validation Here
 	var tokenValid = true;
-	if(token!=process.env.SASTA_KEY){
+	if(token!=SASTA_KEY){
 		res.json({
 			message:"Invalid Authtoken"
 		});
